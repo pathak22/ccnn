@@ -1,0 +1,4 @@
+[submodule "caffe-ccnn"]
+	path = caffe-ccnn
+	url = git@github.com:pathak22/caffe-ccnn.git
+	branch = master

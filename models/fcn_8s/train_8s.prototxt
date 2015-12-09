@@ -1,0 +1,612 @@
+name : "FCN-8s"
+
+# =========== Train Data Layers =========================
+
+layer { type: 'Data' name: 'data' top: 'data'
+  data_param {
+    source: '/mnt/a/pathak/fcn_mil_cache/VOC2012/images_train_lmdb'
+    batch_size: 1 backend: LMDB }
+  transform_param { mean_value: 104.00698793 mean_value: 116.66876762
+    mean_value: 122.67891434 }
+  include { phase: TRAIN } }
+
+layer { type: 'HDF5Data' name: 'gt'
+  top: 'indicator' top: 'indicator_0.01' top: 'indicator_0.05' top: 'indicator_0.10' 
+  top: 'flag_1' top: 'flag_3' top: 'flag_5' top: 'flag_10' top: 'flag_50' top: 'flag_100' top: 'flag_200'
+  hdf5_data_param {
+    source: "/mnt/a/pathak/fcn_mil_cache/VOC2012/indicator_train.txt"
+    batch_size: 1 }
+  include { phase: TRAIN } }
+
+layer { type: 'Silence' 
+  bottom: 'indicator' bottom: 'indicator_0.01' bottom: 'indicator_0.05' bottom: 'indicator_0.10'
+  bottom: 'flag_1' bottom: 'flag_3' bottom: 'flag_5' bottom: 'flag_10' bottom: 'flag_50' bottom: 'flag_100' bottom: 'flag_200'
+  include { phase: TRAIN } }
+
+# =========== Test Data Layers =========================
+
+layer { type: 'Data' name: 'data' top: 'data'
+  data_param {
+    source: '/mnt/a/pathak/fcn_mil_cache/VOC2012/images_val_lmdb'
+    # source: '/mnt/a/pathak/fcn_mil_cache/lmdb_dataset_cache/datum_voc2012segtest'
+    batch_size: 1 backend: LMDB }
+  transform_param { mean_value: 104.00698793 mean_value: 116.66876762
+    mean_value: 122.67891434 }
+  include { phase: TEST } }
+
+layer { type: 'Data' name: 'data-orig' top: 'data-orig'
+  data_param {
+    source: '/mnt/a/pathak/fcn_mil_cache/VOC2012/images_val_lmdb'
+    # source: '/mnt/a/pathak/fcn_mil_cache/lmdb_dataset_cache/datum_voc2012segtest'
+    batch_size: 1 backend: LMDB }
+  include { phase: TEST } }
+
+layer { type: 'Data' name: 'gt' top: 'gt'
+  data_param {
+    source: '/mnt/a/pathak/fcn_mil_cache/VOC2012/segmentation_class_val_lmdb'
+    batch_size: 1 backend: LMDB }
+  include { phase: TEST } }
+
+# ========== Network architecture begin ================
+
+layer : {
+  name : "conv1_1"
+  type : "Convolution"
+  bottom : "data"
+  top : "conv1_1"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 64
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu1_1"
+  type : "ReLU"
+  bottom : "conv1_1"
+  top : "conv1_1"
+}
+layer : {
+  name : "conv1_2"
+  type : "Convolution"
+  bottom : "conv1_1"
+  top : "conv1_2"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 64
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu1_2"
+  type : "ReLU"
+  bottom : "conv1_2"
+  top : "conv1_2"
+}
+layer : {
+  name : "pool1"
+  type : "Pooling"
+  bottom : "conv1_2"
+  top : "pool1"
+  pooling_param : {
+    pool : MAX
+    kernel_size : 3
+    stride : 2
+    pad : 1
+  }
+}
+layer : {
+  name : "conv2_1"
+  type : "Convolution"
+  bottom : "pool1"
+  top : "conv2_1"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 128
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu2_1"
+  type : "ReLU"
+  bottom : "conv2_1"
+  top : "conv2_1"
+}
+layer : {
+  name : "conv2_2"
+  type : "Convolution"
+  bottom : "conv2_1"
+  top : "conv2_2"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 128
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu2_2"
+  type : "ReLU"
+  bottom : "conv2_2"
+  top : "conv2_2"
+}
+layer : {
+  name : "pool2"
+  type : "Pooling"
+  bottom : "conv2_2"
+  top : "pool2"
+  pooling_param : {
+    pool : MAX
+    kernel_size : 3
+    stride : 2
+    pad : 1
+  }
+}
+layer : {
+  name : "conv3_1"
+  type : "Convolution"
+  bottom : "pool2"
+  top : "conv3_1"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 256
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu3_1"
+  type : "ReLU"
+  bottom : "conv3_1"
+  top : "conv3_1"
+}
+layer : {
+  name : "conv3_2"
+  type : "Convolution"
+  bottom : "conv3_1"
+  top : "conv3_2"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 256
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu3_2"
+  type : "ReLU"
+  bottom : "conv3_2"
+  top : "conv3_2"
+}
+layer : {
+  name : "conv3_3"
+  type : "Convolution"
+  bottom : "conv3_2"
+  top : "conv3_3"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 256
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu3_3"
+  type : "ReLU"
+  bottom : "conv3_3"
+  top : "conv3_3"
+}
+layer : {
+  name : "pool3"
+  type : "Pooling"
+  bottom : "conv3_3"
+  top : "pool3"
+  pooling_param : {
+    pool : MAX
+    kernel_size : 3
+    stride : 2
+    pad : 1
+  }
+}
+layer : {
+  name : "conv4_1"
+  type : "Convolution"
+  bottom : "pool3"
+  top : "conv4_1"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 512
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu4_1"
+  type : "ReLU"
+  bottom : "conv4_1"
+  top : "conv4_1"
+}
+layer : {
+  name : "conv4_2"
+  type : "Convolution"
+  bottom : "conv4_1"
+  top : "conv4_2"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 512
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu4_2"
+  type : "ReLU"
+  bottom : "conv4_2"
+  top : "conv4_2"
+}
+layer : {
+  name : "conv4_3"
+  type : "Convolution"
+  bottom : "conv4_2"
+  top : "conv4_3"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 512
+    pad : 1
+    kernel_size : 3
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu4_3"
+  type : "ReLU"
+  bottom : "conv4_3"
+  top : "conv4_3"
+}
+layer : {
+  name : "pool4"
+  type : "Pooling"
+  bottom : "conv4_3"
+  top : "pool4"
+  pooling_param : {
+    pool : MAX
+    kernel_size : 3
+    # stride : 2
+    stride : 1
+    pad : 1
+  }
+}
+layer : {
+  name : "conv5_1"
+  type : "Convolution"
+  bottom : "pool4"
+  top : "conv5_1"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 512
+    #pad: 1
+    pad: 2
+    kernel_size : 3
+    hole: 2
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu5_1"
+  type : "ReLU"
+  bottom : "conv5_1"
+  top : "conv5_1"
+}
+layer : {
+  name : "conv5_2"
+  type : "Convolution"
+  bottom : "conv5_1"
+  top : "conv5_2"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 512
+    #pad: 1
+    pad: 2
+    kernel_size : 3
+    hole: 2
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu5_2"
+  type : "ReLU"
+  bottom : "conv5_2"
+  top : "conv5_2"
+}
+layer : {
+  name : "conv5_3"
+  type : "Convolution"
+  bottom : "conv5_2"
+  top : "conv5_3"
+  convolution_param : {
+    engine: CAFFE
+    num_output : 512
+    #pad: 1
+    pad: 2
+    kernel_size : 3
+    hole: 2
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu5_3"
+  type : "ReLU"
+  bottom : "conv5_3"
+  top : "conv5_3"
+}
+layer : {
+  name : "pool5"
+  type : "Pooling"
+  bottom : "conv5_3"
+  top : "pool5"
+  pooling_param : {
+    pool : MAX
+    kernel_size : 3
+    # stride : 2
+    stride : 1
+    pad : 1
+  }
+}
+layer : {
+  name : "fc6"
+  bottom : "pool5"
+  top : "fc6"
+  type: "Convolution"
+  convolution_param {
+    num_output: 4096
+    engine: CAFFE
+    pad: 6
+    kernel_size: 4
+    hole: 4
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu6"
+  type : "ReLU"
+  bottom : "fc6"
+  top : "fc6"
+}
+layer {
+  name: "drop6"
+  type: "Dropout"
+  bottom: "fc6"
+  top: "fc6"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer : {
+  name : "fc7"
+  bottom : "fc6"
+  top : "fc7"
+  type: "Convolution"
+  convolution_param {
+    engine: CAFFE
+    num_output : 4096
+    kernel_size: 1
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+layer : {
+  name : "relu7"
+  type : "ReLU"
+  bottom : "fc7"
+  top : "fc7"
+}
+layer {
+  name: "drop7"
+  type: "Dropout"
+  bottom: "fc7"
+  top: "fc7"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: 'fc8_voc12'
+  bottom: 'fc7'
+  top: 'fc8'
+  type: "Convolution"
+  convolution_param {
+    engine: CAFFE
+    num_output: 21
+    kernel_size: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+  param : {
+    lr_mult : 1.0
+    decay_mult : 1.0
+  }
+  param : {
+    lr_mult : 2.0
+    decay_mult : 0.0
+  }
+}
+
+# ========== Network architecture end ================
+
+layer {
+  type: 'Python'
+  name: 'weak_loss'
+  bottom: 'fc8'
+  bottom: 'indicator'
+  bottom: 'indicator_0.10' # bottom: 'flag_3' bottom: 'seg_gt' bottom: 'score_crop' 
+  top: 'loss'
+  python_param {
+    module: 'python_layers'
+    layer: 'WeakLoss'
+  }
+  include { phase: TRAIN }
+  loss_weight: 1
+}
+
+layer {
+  name: 'upsample'
+  bottom: 'fc8'
+  top: 'score'
+  type: "Deconvolution"
+  convolution_param {
+    engine: CAFFE
+    group: 21
+    num_output: 21
+    kernel_size: 15
+    stride: 8
+    weight_filler: { type: "bilinear_upsampling" }
+  }
+  param : {
+    lr_mult : 0
+    decay_mult : 0
+  }
+  include { phase: TEST }
+}
+layer {
+  name: 'crop' 
+  type: 'Crop'
+  bottom: 'score'
+  bottom: 'data'
+  top: 'score_crop'
+  include { phase: TEST }
+}
+
+# =============Dense CRF===========================
+# Uncomment the untransformed data layer code on top and set bottom of DENSECRF layer to bottom: 'data-orig', if you want to use that. But similar results with transformed data as well. 
+
+layer { type: 'DenseCRF' name: 'densecrf' bottom: 'score_crop' bottom: 'data-orig' top: 'upscore-crf'
+  # Untuned Default Params
+  # densecrf_param { x_gauss: 6 y_gauss: 6 wt_gauss: 6
+  #   x_bilateral: 50 y_bilateral: 50 r_bilateral: 4 g_bilateral: 4 b_bilateral: 4 wt_bilateral: 5 }
+  # Tuned Deeplab Params
+  densecrf_param { x_gauss: 19 y_gauss: 19 wt_gauss: 15
+   x_bilateral: 61 y_bilateral: 61 r_bilateral: 10 g_bilateral: 10 b_bilateral: 10 wt_bilateral: 35 }
+  include { phase: TEST } }
+# ===================================================

@@ -1,0 +1,9 @@
+# Make sure that Loss is NOT-NORMALIZED by number of pixels.
+base_lr: 1e-8
+lr_policy: "step"
+gamma: 0.1
+stepsize: 10000
+display: 100
+max_iter: 40000
+momentum: 0.99
+weight_decay: 0.0   #0.0000005

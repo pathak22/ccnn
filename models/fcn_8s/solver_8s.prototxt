@@ -1,0 +1,10 @@
+# Make sure that Loss is NORMALIZED by number of pixels.
+lr_policy: "step"
+gamma: 0.1
+stepsize: 40000
+base_lr: 1e-6
+display: 20
+max_iter: 35000
+momentum: 0.99
+weight_decay: 0.0000005
+snapshot: 30000
