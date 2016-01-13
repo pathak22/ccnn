@@ -1,4 +1,4 @@
-# Make sure that Loss is NOT-NORMALIZED by number of pixels.
+# Make sure that Loss is NOT-NORMALIZED by number of pixels i.e. self.normalization=FALSE in src/python_layers.py
 base_lr: 1e-8
 lr_policy: "step"
 gamma: 0.1

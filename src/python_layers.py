@@ -28,13 +28,14 @@ class WeakLoss(caffe.Layer):
 
 		self.semi_supervised = False
 		self.apply_size_constraint = False
+		self.normalization = True  # models/fcn_8s/solver_8s.prototxt needs the loss to be normalized and solver_32s doesn't
 
 		if self.apply_size_constraint:
-			self.bg_lower,self.bg_upper = 0.2,0.6		# This Ablation
-			self.bg_slack = 3	# 1e10
+			self.bg_lower,self.bg_upper = 0.2,0.7
+			self.bg_slack = 1e10
 			self.fg_lower_hard = 0.1
-			self.fg_lower = 0.1 						# This Ablation
-			self.fg_slack = 2	# 1e10
+			self.fg_lower = 0.1
+			self.fg_slack = 1e10
 			self.hardness = 1000
 			self.fg_upper_small = 0.01 		# upper bound on small object. Don't make it zero as strictly less than 0 is not satisfiable. Make it epsilon small.
 		
@@ -68,8 +69,10 @@ class WeakLoss(caffe.Layer):
 				csm = constraintloss.ConstraintSoftmax(self.hardness)
 
 				# Add Negative Label constraints
-				# L = bottom[2].data[i].flatten() > 0.5 			
-				L = bottom[1].data[i].flatten() > 0.5
+				if self.apply_size_constraint:
+					L = bottom[2].data[i].flatten() > 0.5
+				else:
+					L = bottom[1].data[i].flatten() > 0.5
 				csm.addZeroConstraint( (~L).astype(np.float32) )
 				
 				# Add Small Object Size constraints
@@ -88,8 +91,8 @@ class WeakLoss(caffe.Layer):
 				for l in np.flatnonzero(L):
 					if l>0:
 						v = np.zeros(D).astype(np.float32); v[l] = 1
-						if self.apply_size_constraint:
-							csm.addLinearConstraint(  v, self.fg_lower_hard )
+						# if self.apply_size_constraint:
+						# 	csm.addLinearConstraint(  v, self.fg_lower_hard )
 						csm.addLinearConstraint(  v, self.fg_lower, self.fg_slack )
 
 				# Add Background Constraints
@@ -101,8 +104,10 @@ class WeakLoss(caffe.Layer):
 				# Run constrained optimization
 				p = csm.compute(f)
 
-				self.diff.append( ((q-p).T.reshape(bottom[0].data[i].shape))/np.float32(f.shape[0]) )      # normalize by (f.shape[0])
-				# self.diff.append( ((q-p).T.reshape(bottom[0].data[i].shape)) )      # unnormalize
+				if self.normalization:
+					self.diff.append( ((q-p).T.reshape(bottom[0].data[i].shape))/np.float32(f.shape[0]) )      # normalize by (f.shape[0])
+				else:
+					self.diff.append( ((q-p).T.reshape(bottom[0].data[i].shape)) )      # unnormalize
 
 				# Debugging Code ---------
 				# temp = 1
@@ -137,11 +142,15 @@ class WeakLoss(caffe.Layer):
 				ind = np.where(gt==255)
 				p[ind,:] = q[ind,:] 								# so that q-p=0 at this position because it is ignore label
 
-				self.diff.append( ((q-p).T.reshape(bottom[5].data[i].shape))/np.float32(f.shape[0]) )      # normalize by (f.shape[0])
+				if self.normalization:	
+					self.diff.append( ((q-p).T.reshape(bottom[5].data[i].shape))/np.float32(f.shape[0]) )      # normalize by (f.shape[0])
+				else:
+					self.diff.append((q-p).T.reshape(bottom[5].data[i].shape))
 
-			
-			loss += (np.sum(p*np.log(np.maximum(p,1e-10))) - np.sum(p*np.log(np.maximum(q,1e-10))))/np.float32(f.shape[0])    # normalize by (f.shape[0])
-			# loss += (np.sum(p*np.log(np.maximum(p,1e-10))) - np.sum(p*np.log(np.maximum(q,1e-10))))    # unnormalize
+			if self.normalization:			
+				loss += (np.sum(p*np.log(np.maximum(p,1e-10))) - np.sum(p*np.log(np.maximum(q,1e-10))))/np.float32(f.shape[0])    # normalize by (f.shape[0])
+			else:
+				loss += (np.sum(p*np.log(np.maximum(p,1e-10))) - np.sum(p*np.log(np.maximum(q,1e-10))))    # unnormalize
 
 # 			print( np.min(f), np.max(f) )
 # 			np.set_printoptions(linewidth=150)
