@@ -131,5 +131,6 @@ Helper Scripts:
 ### 5) Extra Downloads
 
 - Pascal VOC Image List: [train](http://www.cs.berkeley.edu/~pathak/ccnn/train.txt), [val](http://www.cs.berkeley.edu/~pathak/ccnn/val.txt), [trainval](http://www.cs.berkeley.edu/~pathak/ccnn/trainval.txt), [test](http://www.cs.berkeley.edu/~pathak/ccnn/test.txt)
+- [Training image-level label indicator files](http://www.cs.berkeley.edu/~pathak/ccnn/trainIndicatorFiles.tar.gz)
 - [Pascal VOC 2012 validation result images](http://www.cs.berkeley.edu/~pathak/ccnn/voc_2012_val_results.tar.gz)
 - [Pascal VOC 2012 test result images](http://www.cs.berkeley.edu/~pathak/ccnn/voc_2012_test_results.tar.gz)
